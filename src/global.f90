@@ -7,11 +7,11 @@ module global
    integer, parameter :: neq_rates = 5
    integer, parameter :: neq_intensity = 1
    real(dp), parameter :: tau = 10.0e-9_dp
-   real(dp), parameter ::  wid = tau/(2*(log(2.0_dp))**0.5)
+   real(dp), parameter :: wid = tau/(2*(log(2.0_dp))**0.5)
    real(dp), parameter :: w0 = 10.0e-5_dp
    real(dp), parameter :: M2 = 1.2_dp
-   real(dp), parameter :: ep = 300e-9_dp
-   real(dp), parameter :: phi_pk = 0.94_dp * ep / (0.5_dp * tau)
+   real(dp), parameter :: ep = 0.9e-3_dp
+   real(dp), parameter :: phi_pk = 0.94_dp * ep / (tau)
    real(dp), parameter :: wavelength = 532e-9_dp
    real(dp), parameter :: frq = c/wavelength
    real(dp), dimension(10) :: par
