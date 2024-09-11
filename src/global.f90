@@ -15,7 +15,8 @@ module global
    real(dp), parameter :: wavelength = 532e-9_dp
    real(dp), parameter :: frq = c/wavelength
    real(dp), dimension(10) :: par
-   real(dp), dimension(5) :: pop
+   real(dp), dimension(5, 100) :: pop
+   real(dp), dimension(5) :: current_pop
 
    public
 

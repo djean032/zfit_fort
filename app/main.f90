@@ -10,6 +10,12 @@ program main
    real(dp), dimension(1000) :: t, intensities
 
    call ls_rates%initialize(rhs_rates, neq_rates, istate=istate)
+   call ls_intensity%initialize(rhs_intensity, neq_intensity, istate=istate)
+
+   rtol = 1.0e-8_dp
+   atol(1) = 1.0e-8_dp
+   itask = 1
+   istate = 1
 
    ! Set the parameters
    par(:) = [0._dp, frq, 3.2e-18_dp, 16.e-18_dp, 14.e-18_dp, &
@@ -17,22 +23,17 @@ program main
 
    ! Set the initial conditions
    call cpu_time(start)
-   pop(:) = [1.75e18_dp, 0.0_dp, 0.0_dp, 0.0_dp, 0.0_dp]
+   pop(1:5, 1) = [1.75e18_dp, 0.0_dp, 0.0_dp, 0.0_dp, 0.0_dp]
    call linspace(-5.0e-8_dp, 5.0e-8_dp, t)
    z = 0.0_dp
-   open(unit=10, file="intensities.dat", status="unknown")
    do concurrent(i = 1:1000)
         intensities(i) = irradiance(0.0_dp, t(i), z)
-        write(10, *) t(i), intensities(i)
    end do
    call cpu_time(finish)
+   print *, pop(1:5, 2)
    print *, "Time taken: ", finish - start
 
 
-   rtol = 1.0e-8_dp
-   atol(1) = 1.0e-8_dp
-   itask = 1
-   istate = 1
 !   do
 !      call ls%integrate(y, t, tout, rtol, atol, itask, istate)
 !      if (t .ge. t_fin) exit

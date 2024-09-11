@@ -4,7 +4,7 @@ module chem
 
    private
 
-   public :: rhs_rates
+   public :: rhs_rates, rhs_intensity
 
 contains
    subroutine rhs_rates(self, neq, t, y, ydot, ierr)
@@ -40,9 +40,9 @@ contains
       real(dp), dimension(neq), intent(in) :: y
       real(dp), dimension(neq), intent(out) :: ydot
       integer, intent(out) :: ierr
-      ydot(1) = -par(3)*pop(1)*y(1) &
-                - par(4)*pop(2)*y(1) &
-                - par(5)*pop(4)*y(1)
+      ydot(1) = -par(3)*current_pop(1)*y(1) &
+                - par(4)*current_pop(2)*y(1) &
+                - par(5)*current_pop(4)*y(1)
 
       ierr = 0
    end subroutine rhs_intensity
