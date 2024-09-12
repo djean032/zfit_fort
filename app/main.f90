@@ -7,7 +7,8 @@ program main
    type(lsoda_class) :: ls_rates, ls_intensity
    integer :: istate, itask, i, j
    real(dp) :: z, zout, tout, rtol, atol(1), start, finish
-   real(dp), dimension(1000) :: t, intensities
+   real(dp), dimension(t_slices) :: t, intensities
+   real(dp), dimension(z_slices) :: z_pos
 
    call ls_rates%initialize(rhs_rates, neq_rates, istate=istate)
    call ls_intensity%initialize(rhs_intensity, neq_intensity, istate=istate)
@@ -24,13 +25,14 @@ program main
    ! Set the initial conditions
    call cpu_time(start)
    pop(1:5, 1) = [1.75e18_dp, 0.0_dp, 0.0_dp, 0.0_dp, 0.0_dp]
-   call linspace(-5.0e-8_dp, 5.0e-8_dp, t)
+   t = linspace(-5.0e-8_dp, 5.0e-8_dp, t_slices)
+   z_pos = linspace(-20.0_dp, 20.0_dp, z_slices)
    z = 0.0_dp
    do concurrent(i = 1:1000)
         intensities(i) = irradiance(0.0_dp, t(i), z)
    end do
    call cpu_time(finish)
-   print *, pop(1:5, 2)
+   print *, z_pos
    print *, "Time taken: ", finish - start
 
 
