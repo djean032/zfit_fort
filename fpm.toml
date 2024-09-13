@@ -7,7 +7,6 @@ copyright = "Copyright 2024, djean032"
 [dependencies]
 stdlib = "*"
 minpack = "*"
-odepack.git = "https://github.com/Nicholaswogan/odepack"
 [dev-dependencies]
 test-drive.git = "https://github.com/fortran-lang/test-drive"
 [build]
