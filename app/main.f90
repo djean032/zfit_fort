@@ -49,7 +49,6 @@ program main
     z0 = 0.0_dp
     zout = z_sample(2)
       
-    print *, zout
     do concurrent (j=1:z_pos_slices)
         z = z_pos(j)
         do concurrent(i=1:t_slices)
@@ -82,7 +81,6 @@ program main
     do i=1, z_pos_slices
         write(1, *) z_pos(i), normals(i)
     end do
-    print *, pop
     print *, "Time taken: ", finish - start
 contains
 end program main
