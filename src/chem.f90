@@ -114,8 +114,8 @@ contains
         neq = 1
         lrw = 102
         liw = 25
-        rtol = 1.0e-8_dp
-        atol(1) = 1.0e-8_dp
+        rtol = 1.0e-6_dp
+        atol(1) = 1.0e-6_dp
         itol = 1
         itask = 1
         istate = 1
