@@ -1,6 +1,19 @@
 module chem
     use global
     implicit none
+
+    private
+
+    abstract interface 
+        function expr_f(x, pars) result(y)
+            import :: dp
+            implicit none
+            real(dp), intent(in) :: x(:)
+            real(dp), intent(in) :: pars(:)
+            real(dp) :: y(size(x))
+        end function expr_f
+    end interface
+
     abstract interface
         pure subroutine odepack_f(neq, t, y, ydot)
           import :: dp
@@ -33,9 +46,9 @@ module chem
         
     end interface 
 
-    private
 
-    public :: rhs_rates, rhs_intensity, jdum, solve_rates, solve_intensity
+    public :: rhs_rates, rhs_intensity, jdum, solve_rates, solve_intensity, &
+              solve_system
 
 contains
     pure subroutine rhs_rates(neq, t, y, ydot)
@@ -127,6 +140,65 @@ contains
         call DLSODA(rhs_intensity, neq, y_ret, t_ret, tout_ret, itol, &
         rtol, atol(1), itask, istate, iopt, rwork, lrw, iwork, liw, jdum, jt)
     end function solve_intensity
+
+    function solve_system(x, pars) result(y)
+        real(dp), intent(in) :: x(:)
+        real(dp), intent(in) :: pars(:)
+        current_intensity(10) = pars(1)
+        current_pop(10) = pars(1)
+        real(dp), dimension(size(x)) :: y
+        t0 = 0.0_dp
+        tout = t(2) - t(1)
+        z0 = 0.0_dp
+        zout = z_sample(2)
+        do concurrent (pos_idx=1:z_pos_slices)
+            do concurrent(j=1:z_slices)
+                pop(:, j) = initial_pop
+            end do
+            do i=1, t_slices
+                current_intensity(1) = intensities(pos_idx, i)
+                do j=1, z_slices
+                     current_pop(1:5) = pop(:, j)
+                     current_pop(6) = current_intensity(1)
+                     current_pop = solve_rates(current_pop, t0, tout)
+                     pop(:, j) = current_pop(1:5)
+                     current_intensity(2:6) = current_pop(1:5)
+                     current_intensity = solve_intensity(current_intensity, z0, zout)
+                end do
+                final_intensities(pos_idx, i) = current_intensity(1)
+            end do
+        end do
+        y = sum(final_intensities, dim=2)
+    end function solve_system
+
+    subroutine fit_scan(data_x, data_y, expr, pars)
+        real(dp), intent(in) :: data_x(:)
+        real(dp), intent(in) :: data_y(:)
+        procedure(expr_f) :: expr
+        real(dp), intent(out) :: pars(:)
+
+        real(dp) :: tol, fvec(size(dat_x))
+        integer :: iwa(size(pars)), info, m, n
+        real(dp), allocatable :: wa(:)
+
+        tol = sqrt(epsilon(1.0_dp))
+        m = size(fvec)
+        n = size(pars)
+        allocate(wa(2*m*n + 5*n + m))
+        call lmdif(expr, m, n, pars, fvec, tol, info, iwa, wa)
+        if (info /= 1) stop "failed to converge"
+
+        contains
+            
+            subroutine fcn
+            integer, intent(in) :: m, n
+            integer, intent(inout) :: iflag
+            real(dp), intent(in) :: x(n)
+            real(dp), intent(out) :: fvec(m)
+            fvec(1) = iflag
+            fvec = data_y - expr(data_x, x)
+            end subroutine fcn
+    end subroutine fit_scan
 
 end module chem
 
