@@ -48,7 +48,7 @@ module chem
 
 
     public :: rhs_rates, rhs_intensity, jdum, solve_rates, solve_intensity, &
-              solve_system
+              solve_system, fit_scan
 
 contains
     pure subroutine rhs_rates(neq, t, y, ydot)
@@ -144,9 +144,13 @@ contains
     function solve_system(x, pars) result(y)
         real(dp), intent(in) :: x(:)
         real(dp), intent(in) :: pars(:)
+        real(dp) :: y(size(x)), normals(size(x))
+        print *, pars
+        initial_pop(:) = [2.90869e17_dp, 0.0_dp, 0.0_dp, 0.0_dp, 0.0_dp]
+        current_pop(1:5) = initial_pop
+        current_intensity(2:6) = initial_pop
         current_intensity(10) = pars(1)
         current_pop(10) = pars(1)
-        real(dp), dimension(size(x)) :: y
         t0 = 0.0_dp
         tout = t(2) - t(1)
         z0 = 0.0_dp
@@ -169,6 +173,9 @@ contains
             end do
         end do
         y = sum(final_intensities, dim=2)
+        int0 = sum(intensities, dim=2)
+        normals = y/int0
+        y = y/int0 + (1.0_dp - maxval(normals))
     end function solve_system
 
     subroutine fit_scan(data_x, data_y, expr, pars)
@@ -177,7 +184,7 @@ contains
         procedure(expr_f) :: expr
         real(dp), intent(out) :: pars(:)
 
-        real(dp) :: tol, fvec(size(dat_x))
+        real(dp) :: tol, fvec(size(data_x))
         integer :: iwa(size(pars)), info, m, n
         real(dp), allocatable :: wa(:)
 
@@ -185,18 +192,21 @@ contains
         m = size(fvec)
         n = size(pars)
         allocate(wa(2*m*n + 5*n + m))
-        call lmdif(expr, m, n, pars, fvec, tol, info, iwa, wa)
-        if (info /= 1) stop "failed to converge"
+        call lmdif1(fcn, m, n, pars, fvec, tol, info, iwa, wa, size(wa))
 
         contains
             
-            subroutine fcn
-            integer, intent(in) :: m, n
-            integer, intent(inout) :: iflag
-            real(dp), intent(in) :: x(n)
-            real(dp), intent(out) :: fvec(m)
-            fvec(1) = iflag
-            fvec = data_y - expr(data_x, x)
+          subroutine fcn(m, n, x, fvec, iflag)
+              integer, intent(in) :: m, n
+              integer, intent(inout) :: iflag
+              real(dp), intent(in) :: x(n)
+              real(dp), intent(out) :: fvec(m)
+              real(dp) :: y(size(data_x))
+              fvec(1) = iflag
+              y = expr(data_x, x) 
+              print *, data_y(50)
+              print *, y(50)
+              fvec = abs(data_y - y)
             end subroutine fcn
     end subroutine fit_scan
 

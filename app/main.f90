@@ -3,6 +3,9 @@ program main
     use chem
     use laser
     implicit none
+
+    real(dp) :: params(1)
+    integer :: loc(1)
     
     call cpu_time(start)
     ! Allocate arrays
@@ -20,6 +23,12 @@ program main
     call loadtxt('./data/6-Br/6-Br-pbt-532nm-154.2nJ.all', exp, skiprows=10, fmt="*")
     z_pos = exp(:, 1) * 1.0e-3_dp
     transmission = exp(:, 3)/exp(:, 2)
+    transmission = transmission + (1.0_dp - maxval(transmission))
+    loc = minloc(transmission)
+    z_pos = z_pos - z_pos(loc(1))
+
+    
+    
 
 
     ! Initialize t and z values for DLSODA
@@ -45,21 +54,22 @@ program main
                       frq, 5.48e-18_dp, 16.0e-18_dp, 28.1e-18_dp, &
                       1.0e-12_dp, 1.0e-12_dp, 1.0e-12_dp, 1.05e-7_dp, &
                       1.0e-12_dp]
+    params = [4.1e-17]
 
     ! Solve system
-    tot = solve_system()
+    ! tot = solve_system(z_pos, params)
+    call fit_scan(z_pos, transmission, solve_system, params)
+    print *, params
+    tot = solve_system(z_pos, params)
 
 
 
     call cpu_time(finish)
     int0 = sum(intensities, dim=2)
-    normals = tot/int0
-    normals = tot/int0 + (1.0_dp - maxval(normals))
-    transmission = transmission + (1.0_dp - maxval(transmission))
     open(1, file="intensities.dat", status="unknown")
     open(2, file="exp.dat", status="unknown")
     do i=1, z_pos_slices
-        write(1, *) z_pos(i), normals(i)
+        write(1, *) z_pos(i), tot(i)
         write(2, *) z_pos(i), transmission(i)
     end do
     print *, "Time taken: ", finish - start
