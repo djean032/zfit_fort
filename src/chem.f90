@@ -4,7 +4,7 @@ module chem
 
     private
 
-    abstract interface 
+    abstract interface
         function expr_f(x, pars) result(y)
             import :: dp
             implicit none
@@ -16,20 +16,21 @@ module chem
 
     abstract interface
         pure subroutine odepack_f(neq, t, y, ydot)
-          import :: dp
-          implicit none
-          integer, intent(in) :: neq
-          real(dp), intent(in) :: t
-          real(dp), intent(in) :: y(15)
-          real(dp), intent(out) :: ydot(neq)
+            import :: dp
+            implicit none
+            integer, intent(in) :: neq
+            real(dp), intent(in) :: t
+            real(dp), intent(in) :: y(15)
+            real(dp), intent(out) :: ydot(neq)
         end subroutine
-        
+
         pure subroutine odepack_jac()
         end subroutine
     end interface
-    interface 
+    interface
         pure subroutine DLSODA(f, neq, y, t, tout, itol, rtol, atol, itask, &
-                          istate, iopt, rwork, lrw, iwork, liw, jac, jt)
+                               istate, iopt, rwork, lrw, iwork, liw, jac, jt)
+            import :: odepack_f, odepack_jac
             import :: dp
             implicit none
             integer, intent(in) :: neq, itol, itask, iopt, lrw, liw, jt
@@ -43,9 +44,8 @@ module chem
             procedure(odepack_f) :: f
             procedure(odepack_jac) :: jac
         end subroutine
-        
-    end interface 
 
+    end interface
 
     public :: rhs_rates, rhs_intensity, jdum, solve_rates, solve_intensity, &
               solve_system, fit_scan
@@ -89,7 +89,7 @@ contains
 
     pure function solve_rates(y, t, tout) result(y_ret)
         integer :: neq, itol, itask, iopt, lrw, &
-                               liw, jt, istate
+                   liw, jt, istate
         real(dp), intent(in) :: t, tout
         real(dp) :: t_ret, tout_ret, rtol, atol(1), rwork(102)
         real(dp), intent(in) :: y(15)
@@ -111,12 +111,12 @@ contains
         jt = 2
         y_ret = y
         call DLSODA(rhs_rates, neq, y_ret, t_ret, tout_ret, itol, &
-        rtol, atol(1), itask, istate, iopt, rwork, lrw, iwork, liw, jdum, jt)
+                    rtol, atol(1), itask, istate, iopt, rwork, lrw, iwork, liw, jdum, jt)
     end function solve_rates
 
     pure function solve_intensity(y, t, tout) result(y_ret)
         integer :: neq, itol, itask, iopt, lrw, &
-                               liw, jt, istate
+                   liw, jt, istate
         real(dp), intent(in) :: t, tout
         real(dp) :: t_ret, tout_ret, rtol, atol(1), rwork(102)
         real(dp), intent(in) :: y(15)
@@ -138,14 +138,13 @@ contains
         jt = 2
         y_ret = y
         call DLSODA(rhs_intensity, neq, y_ret, t_ret, tout_ret, itol, &
-        rtol, atol(1), itask, istate, iopt, rwork, lrw, iwork, liw, jdum, jt)
+                    rtol, atol(1), itask, istate, iopt, rwork, lrw, iwork, liw, jdum, jt)
     end function solve_intensity
 
     function solve_system(x, pars) result(y)
         real(dp), intent(in) :: x(:)
         real(dp), intent(in) :: pars(:)
         real(dp) :: y(size(x)), normals(size(x))
-        print *, pars
         initial_pop(:) = [2.90869e17_dp, 0.0_dp, 0.0_dp, 0.0_dp, 0.0_dp]
         current_pop(1:5) = initial_pop
         current_intensity(2:6) = initial_pop
@@ -155,19 +154,19 @@ contains
         tout = t(2) - t(1)
         z0 = 0.0_dp
         zout = z_sample(2)
-        do concurrent (pos_idx=1:z_pos_slices)
+        do concurrent(pos_idx=1:z_pos_slices)
             do concurrent(j=1:z_slices)
                 pop(:, j) = initial_pop
             end do
-            do i=1, t_slices
+            do i = 1, t_slices
                 current_intensity(1) = intensities(pos_idx, i)
-                do j=1, z_slices
-                     current_pop(1:5) = pop(:, j)
-                     current_pop(6) = current_intensity(1)
-                     current_pop = solve_rates(current_pop, t0, tout)
-                     pop(:, j) = current_pop(1:5)
-                     current_intensity(2:6) = current_pop(1:5)
-                     current_intensity = solve_intensity(current_intensity, z0, zout)
+                do j = 1, z_slices
+                    current_pop(1:5) = pop(:, j)
+                    current_pop(6) = current_intensity(1)
+                    current_pop = solve_rates(current_pop, t0, tout)
+                    pop(:, j) = current_pop(1:5)
+                    current_intensity(2:6) = current_pop(1:5)
+                    current_intensity = solve_intensity(current_intensity, z0, zout)
                 end do
                 final_intensities(pos_idx, i) = current_intensity(1)
             end do
@@ -178,36 +177,35 @@ contains
         y = y/int0 + (1.0_dp - maxval(normals))
     end function solve_system
 
-    subroutine fit_scan(data_x, data_y, expr, pars)
+    subroutine fit_scan(data_x, data_y, expr, pars, fvec)
         real(dp), intent(in) :: data_x(:)
         real(dp), intent(in) :: data_y(:)
         procedure(expr_f) :: expr
         real(dp), intent(out) :: pars(:)
 
-        real(dp) :: tol, fvec(size(data_x))
+        real(dp) :: tol
+        real(dp), intent(out) :: fvec(size(data_x))
         integer :: iwa(size(pars)), info, m, n
         real(dp), allocatable :: wa(:)
 
         tol = sqrt(epsilon(1.0_dp))
         m = size(fvec)
         n = size(pars)
-        allocate(wa(2*m*n + 5*n + m))
+        allocate (wa(2*m*n + 5*n + m))
         call lmdif1(fcn, m, n, pars, fvec, tol, info, iwa, wa, size(wa))
 
-        contains
-            
-          subroutine fcn(m, n, x, fvec, iflag)
-              integer, intent(in) :: m, n
-              integer, intent(inout) :: iflag
-              real(dp), intent(in) :: x(n)
-              real(dp), intent(out) :: fvec(m)
-              real(dp) :: y(size(data_x))
-              fvec(1) = iflag
-              y = expr(data_x, x) 
-              print *, data_y(50)
-              print *, y(50)
-              fvec = abs(data_y - y)
-            end subroutine fcn
+    contains
+
+        subroutine fcn(m, n, x, fvec, iflag)
+            integer, intent(in) :: m, n
+            integer, intent(inout) :: iflag
+            real(dp), intent(in) :: x(n)
+            real(dp), intent(out) :: fvec(m)
+            real(dp) :: y(size(data_x))
+            fvec(1) = iflag
+            y = expr(data_x, x)
+            fvec = (data_y - y)
+        end subroutine fcn
     end subroutine fit_scan
 
 end module chem
