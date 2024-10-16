@@ -105,8 +105,8 @@ contains
         neq = 5
         lrw = 102
         liw = 25
-        rtol = 1.0e-6_dp
-        atol = 1.0e-6_dp
+        rtol = 0.5e-6_dp
+        atol = 0.5e-6_dp
         itol = 1
         itask = 1
         istate = 1
@@ -133,8 +133,8 @@ contains
         neq = 1
         lrw = 102
         liw = 25
-        rtol = 1.0e-6_dp
-        atol = 1.0e-6_dp
+        rtol = 0.5e-6_dp
+        atol = 0.5e-6_dp
         itol = 1
         itask = 1
         istate = 1
@@ -214,7 +214,7 @@ contains
         integer :: iwa(size(pars)), info, m, n
         procedure(expr_f) :: expr
         real(dp) ::  wa(2*size(fvec)*size(pars) + 5*size(pars) + size(fvec))
-        tol = sqrt(epsilon(1.0_dp))
+        tol = 1e-3_dp
         m = size(fvec)
         n = size(pars)
         call lmdif1(fcn, m, n, pars, fvec, tol, info, iwa, wa, size(wa))

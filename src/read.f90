@@ -73,7 +73,6 @@ contains
             case(0)
                 exp_data(i, :) = data
             case(iostat_end)
-                print *, "End of file"
                 exit
             case default
                 print *, "Error reading file"

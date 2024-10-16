@@ -18,7 +18,7 @@ contains
     pure function power(t)
         real(dp), intent(in) :: t
         real(dp) :: power
-        power = phi_pk*dexp(-(t/wid)**2)
+        power = (0.94_dp*ep/tau)*dexp(-(t/wid)**2)
     end function power
 
     pure function W(z)

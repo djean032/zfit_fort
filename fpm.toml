@@ -7,8 +7,7 @@ copyright = "Copyright 2024, djean032"
 [dependencies]
 stdlib = "*"
 minpack = "*"
-M_CLI2.git = "https://github.com/urbanjost/M_CLI2"
-M_io.git = "https://github.com/urbanjost/M_io"
+M_CLI2 = { git = "https://github.com/urbanjost/M_CLI2" }
 [dev-dependencies]
 test-drive.git = "https://github.com/fortran-lang/test-drive"
 [build]
